@@ -4,7 +4,7 @@ import ccxt
 from flask import Flask
 from threading import Thread
 
-# 1. Flask App (Render Uptime Ke Liye)
+# 1. Flask App Setup (Render Uptime Check Ke Liye)
 app = Flask(__name__)
 
 @app.route('/')
@@ -13,28 +13,36 @@ def home():
 
 def run_web_server():
     port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port)
+    # Werkzeug logger quiet kar rahe hain taaki logs me sirf trades dikhein
+    app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
 
-# 2. Main Trading Function
+# 2. Main Trading Bot Function
 def trading_bot():
-    print("⚡ Trading Bot Process Initializing...")
+    # Render server boot hone ka 5 second wait karein
+    time.sleep(5)
+    print("\n==========================================")
+    print("⚡ FAST TRADING BOT INITIALIZED ⚡")
+    print("==========================================\n")
     
-    # Delta API Credentials
     API_KEY = os.environ.get('DELTA_API_KEY')
     API_SECRET = os.environ.get('DELTA_API_SECRET')
 
     if not API_KEY or not API_SECRET:
-        print("❌ Error: API Keys Render Environment Variables mein nahi mili!")
+        print("❌ CRITICAL ERROR: Delta API Keys Render Environment Variables mein nahi mili!")
+        print("Kripya Render Dashboard -> Environment mein DELTA_API_KEY aur DELTA_API_SECRET set karein.\n")
         return
 
-    exchange = ccxt.delta({
-        'apiKey': API_KEY,
-        'secret': API_SECRET,
-        'enableRateLimit': True,
-    })
-    
-    # Demo/Testnet Enable
-    exchange.set_sandbox_mode(True)
+    try:
+        exchange = ccxt.delta({
+            'apiKey': API_KEY,
+            'secret': API_SECRET,
+            'enableRateLimit': True,
+        })
+        exchange.set_sandbox_mode(True)  # Demo/Testnet Account Mode
+        print("✅ Delta Exchange Connected in Demo Mode.")
+    except Exception as e:
+        print(f"❌ Connection Error: {e}")
+        return
 
     SYMBOL = 'BTC/USD'
     LEVERAGE = 25
@@ -43,27 +51,27 @@ def trading_bot():
     # Set Leverage
     try:
         exchange.set_leverage(LEVERAGE, SYMBOL)
-        print(f"✅ Leverage {LEVERAGE}x set successfully.")
+        print(f"✅ Leverage successfully set to {LEVERAGE}x.")
     except Exception as e:
-        print(f"⚠️ Leverage Status: {e}")
+        print(f"⚠️ Leverage Notice: {e}")
 
-    print("🚀 Loop Started: Executing trade every 5 minutes...")
+    print("\n🚀 Starting Fast Trading Loop (Execution every 300 seconds)...")
     
     while True:
         try:
             print("\n🛒 Executing Instant Buy Order...")
             order = exchange.create_market_buy_order(SYMBOL, LOT_SIZE)
-            print(f"🎉 Order Successful! Order ID: {order['id']}")
+            print(f"🎉 SUCCESS! Market Order Placed. Order ID: {order.get('id', 'N/A')}")
         except Exception as e:
-            print(f"❌ Order Error: {e}")
+            print(f"❌ TRADE FAILED! Error Details: {e}")
         
-        # 5 minute wait
+        # 5 Minute Interval (300 seconds)
         time.sleep(300)
 
 if __name__ == '__main__':
-    # Trading Bot ko background thread mein start karein
-    bot_thread = Thread(target=trading_bot, daemon=True)
-    bot_thread.start()
+    # Web server ko background thread me start karein
+    web_thread = Thread(target=run_web_server, daemon=True)
+    web_thread.start()
     
-    # Web server ko main thread par chalayein
-    run_web_server()
+    # Trading bot ko main execution thread par chalayein
+    trading_bot()
