@@ -1,9 +1,10 @@
+import os
 import time
 import ccxt
 from flask import Flask
 from threading import Thread
 
-# Flask Server (Render Web Service Ko Active Rakhne Ke Liye)
+# Flask Server (Render Web Service ke liye)
 app = Flask(__name__)
 
 @app.route('/')
@@ -11,31 +12,32 @@ def home():
     return "Delta Fast Auto-Trader Active!"
 
 def run_web_server():
-    app.run(host='0.0.0.0', port=10000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
 
-# Background Thread Mein Web Server Start Karein
 Thread(target=run_web_server, daemon=True).start()
 
-# Delta Testnet Setup
+# Render Environment Variables se Keys fetch kar raha hai
+API_KEY = os.environ.get('DELTA_API_KEY')
+API_SECRET = os.environ.get('DELTA_API_SECRET')
+
 exchange = ccxt.delta({
-    'apiKey': 'YOUR_DELTA_DEMO_API_KEY',
-    'secret': 'YOUR_DELTA_DEMO_API_SECRET',
+    'apiKey': API_KEY,
+    'secret': API_SECRET,
     'enableRateLimit': True,
 })
 exchange.set_sandbox_mode(True)  # Demo Account
 
 SYMBOL = 'BTC/USD'
 LEVERAGE = 25
-LOT_SIZE = 10  # 10 Lots
+LOT_SIZE = 10
 
-# Set Leverage
 try:
     exchange.set_leverage(LEVERAGE, SYMBOL)
     print(f"Leverage set to {LEVERAGE}x successfully.")
 except Exception as e:
     print(f"Leverage Status: {e}")
 
-# Main Fast Trading Loop
 print("⚡ Fast Trading Bot Started...")
 while True:
     try:
@@ -45,5 +47,4 @@ while True:
     except Exception as e:
         print(f"Order Error: {e}")
     
-    # Har 5 minute (300 seconds) me loop chalega
     time.sleep(300)
