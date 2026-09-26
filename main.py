@@ -8,7 +8,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "Delta Perpetual Bot Active!"
+    return "Delta Auto-Trader Active!"
 
 def run_web_server():
     port = int(os.environ.get("PORT", 10000))
@@ -17,7 +17,7 @@ def run_web_server():
 def start_bot():
     time.sleep(2)
     print("\n==========================================")
-    print("⚡ DELTA BITCOIN PERPETUAL BOT INITIALIZING ⚡")
+    print("⚡ DELTA BITCOIN BOT INITIALIZING ⚡")
     print("==========================================\n")
 
     API_KEY = os.environ.get('DELTA_API_KEY')
@@ -39,7 +39,8 @@ def start_bot():
         }
     })
 
-    SYMBOL = 'BTC/USD:BTC'
+    # Exact Working Symbol from Delta UI
+    SYMBOL = 'BTCUSD'
     LOT_SIZE = 10
 
     try:
@@ -48,7 +49,7 @@ def start_bot():
     except Exception as e:
         print(f"⚠️ Leverage Status: {e}")
 
-    print("\n🚀 Starting Order Execution Loop...")
+    print("\n🚀 Starting Order Execution Loop (Every 5 minutes)...")
 
     while True:
         try:
@@ -61,9 +62,7 @@ def start_bot():
         time.sleep(300)
 
 if __name__ == '__main__':
-    # Web server ko daemon thread me chalayein
     server_thread = Thread(target=run_web_server, daemon=True)
     server_thread.start()
 
-    # Bot logic execute karein
     start_bot()
